@@ -1,101 +1,149 @@
-function Book() {
-  this.title = document.querySelector("#title").value;
-  this.author = document.querySelector("#author").value;
-  this.genre = document.querySelector("#genre").value;
-  this.read = document.querySelector("#read");
-  if (this.read.checked) {
-    this.read = "Read";
-  } else {
-    this.read = "Unread";
-  }
-}
-
+const myLibrary = [];
 const promptBox = document.querySelector(".prompt-box");
 const promptBg = document.querySelector(".prompt-bg");
-const addBookPrompt = document.querySelector(".header__new-book");
 
-function showOrHidePromptBox() {
+const FORM_INPUT_IDS = {
+  title: "#title",
+  author: "#author",
+  genre: "#genre",
+  pages: "#pages",
+  hasRead: "#has-read",
+};
+
+function retrieveFormInput(item) {
+  return document.querySelector(FORM_INPUT_IDS[item]);
+}
+
+function Book() {
+  this.title = retrieveFormInput("title").value;
+  this.author = retrieveFormInput("author").value;
+  this.genre = retrieveFormInput("genre").value;
+  this.pages = retrieveFormInput("pages").value;
+  this.hasRead = retrieveFormInput("hasRead").checked ? "Read" : "Unread";
+}
+
+function displayOrHidePromptBox() {
   promptBox.classList.toggle("visible");
   promptBg.classList.toggle("visible");
 }
-addBookPrompt.addEventListener("click", showOrHidePromptBox);
-promptBg.addEventListener("click", showOrHidePromptBox);
 
-const myLibrary = [];
+function createParagraph(value) {
+  const paragraph = document.createElement("p");
+  paragraph.textContent = value;
+  return paragraph;
+}
+
+function updateReadStatus(selectedBook, selectedBookBtn) {
+  const bookItem = selectedBook;
+  const bookButton = selectedBookBtn;
+  if (selectedBook.hasRead === "Unread") {
+    bookItem.hasRead = "Read";
+    bookButton.textContent = "Read";
+  } else {
+    bookItem.hasRead = "Unread";
+    bookButton.textContent = "Unread";
+  }
+  bookButton.classList.toggle("read");
+}
+
+function removeBookCard(bookObject, bookCardItem) {
+  /* This function removes the book from the array based
+   * on its data-index value previously set on the element.
+   * Then it re-arranges the index of the remaining items
+   * accordingly.
+   */
+  const bookIndex = bookCardItem.getAttribute("data-index");
+  bookObject.splice(bookIndex, 1);
+  bookCardItem.remove();
+
+  const allBookCards = document.querySelectorAll(".main__book-card");
+  allBookCards.forEach((card, index) => {
+    card.setAttribute("data-index", index);
+  });
+}
+
+function createBookCard(book) {
+  // Destructure the book's object to avoid code repetition
+  const { title, author, genre, pages, hasRead } = book;
+  const mainContainer = document.querySelector(".main__container");
+
+  const bookCard = document.createElement("div");
+  const bookTitle = document.createElement("h3");
+  bookCard.setAttribute("data-index", myLibrary.indexOf(book));
+  bookTitle.textContent = title;
+
+  const bookAuthorContainer = document.createElement("div");
+  const bookAuthorLabel = createParagraph("Author:");
+  const bookAuthor = createParagraph(author);
+
+  const bookGenreContainer = document.createElement("div");
+  const bookGenreLabel = createParagraph("Genre:");
+  const bookGenre = createParagraph(genre);
+
+  const bookPagesContainer = document.createElement("div");
+  const bookPagesLabel = createParagraph("Pages:");
+  const bookPages = createParagraph(pages);
+
+  const hasReadBtnContainer = document.createElement("div");
+  const hasReadBookBtn = document.createElement("button");
+  hasReadBookBtn.textContent = hasRead;
+  hasRead === "Read" ? hasReadBookBtn.classList.add("read") : "";
+
+  const removeBookBtnContainer = document.createElement("div");
+  const removeBookBtn = document.createElement("span");
+  removeBookBtn.textContent = "delete";
+
+  bookCard.classList.add("main__book-card");
+  hasReadBookBtn.classList.add("has-read-button");
+  removeBookBtnContainer.classList.add("remove-button");
+  removeBookBtn.classList.add("material-symbols-outlined", "remove");
+
+  mainContainer.appendChild(bookCard);
+  bookCard.append(
+    bookTitle,
+    bookAuthorContainer,
+    bookGenreContainer,
+    bookPagesContainer,
+    hasReadBtnContainer,
+    removeBookBtnContainer
+  );
+
+  bookAuthorContainer.append(bookAuthorLabel, bookAuthor);
+  bookGenreContainer.append(bookGenreLabel, bookGenre);
+  bookPagesContainer.append(bookPagesLabel, bookPages);
+  hasReadBtnContainer.appendChild(hasReadBookBtn);
+  removeBookBtnContainer.appendChild(removeBookBtn);
+
+  hasReadBookBtn.addEventListener("click", () => {
+    updateReadStatus(book, hasReadBookBtn);
+  });
+
+  removeBookBtn.addEventListener("click", () => {
+    removeBookCard(myLibrary, bookCard);
+  });
+}
+
+function bookAlreadyExists(newBook, existingBookTitle, currentBookTitle) {
+  const bookWarning = document.querySelector(".book-exists-warning");
+
+  if (!existingBookTitle.includes(currentBookTitle)) {
+    myLibrary.push(newBook);
+    createBookCard(newBook);
+    displayOrHidePromptBox();
+    bookWarning.classList.remove("visible");
+  } else {
+    bookWarning.classList.toggle("visible");
+  }
+}
 
 function addBookToLibrary() {
-  /* This entire bit of code checks whether the book
-   * already exists in the library or not. If it does,
-   * it stops the function. If it doesn't exist, it runs
-   * the function normally and hides the prompt box.
-   * I NEED TO LOOK INTO THIS CODE AND THIS APPROACH.
-   * IT WAS DONE REALLY QUICKLY FOR TESTING PURPOSES.
-   */
-  const currentBookTitle = document.querySelector("#title");
-  const existingTitles = [];
+  const newBook = new Book();
+  const currentBookTitle = retrieveFormInput("title").value;
 
-  const theTitles = function () {
-    for (let i = 0; i < myLibrary.length; i += 1) {
-      existingTitles.push(myLibrary[i].title);
-    }
-  };
-  theTitles();
-  // LOOK INTO IIFE AGAIN WHEN COMING BACK TO THIS CODE
+  // We make sure that the book's title isn't already in the library.
+  const alreadyExistingBooks = myLibrary.map((book) => book.title);
 
-  console.log(existingTitles);
-  console.log(myLibrary);
-
-  if (!existingTitles.includes(currentBookTitle.value)) {
-    myLibrary.push(new Book());
-    showOrHidePromptBox();
-  } else {
-    alert("Exists");
-    return;
-  }
-  // END
-
-  const bookContainer = document.querySelector(".main__container");
-  const bookCard = document.createElement("div");
-  bookCard.classList.add("main__book-card");
-  bookContainer.appendChild(bookCard);
-
-  const bookTitle = document.createElement("p");
-  const bookAuthor = document.createElement("p");
-  const bookGenre = document.createElement("p");
-  const bookReadStatus = document.createElement("button");
-
-  for (let i = 0; i < myLibrary.length; i += 1) {
-    bookCard.setAttribute("data-index", i);
-    bookTitle.textContent = `"${myLibrary[i].title}"`;
-    bookAuthor.textContent = myLibrary[i].author;
-    bookGenre.textContent = myLibrary[i].genre;
-    bookReadStatus.textContent = myLibrary[i].read;
-  }
-
-  bookReadStatus.addEventListener("click", (e) => {
-    if (e.target.textContent === "Read") {
-      e.target.textContent = "Unread";
-    } else {
-      e.target.textContent = "Read";
-    }
-  });
-
-  const deleteBtn = document.createElement("button");
-  deleteBtn.textContent = "Remove";
-
-  deleteBtn.addEventListener("click", () => {
-    const bookCardIndex = bookCard.getAttribute("data-index");
-    myLibrary.splice(bookCardIndex, 1);
-    bookCard.remove();
-
-    /* Re-set the data-index for the remaining bookCard(s) */
-    const allBookCards = document.querySelectorAll(".main__book-card");
-    for (let i = 0; i < allBookCards.length; i += 1) {
-      allBookCards[i].setAttribute("data-index", i);
-    }
-  });
-
-  bookCard.append(bookTitle, bookAuthor, bookGenre, bookReadStatus, deleteBtn);
+  bookAlreadyExists(newBook, alreadyExistingBooks, currentBookTitle);
 }
 
 const addBookBtn = document
@@ -104,3 +152,14 @@ const addBookBtn = document
     e.preventDefault();
     addBookToLibrary();
   });
+
+const newBookPrompt = document
+  .querySelector(".header__new-book")
+  .addEventListener("click", () => {
+    document.querySelector("form").reset();
+    displayOrHidePromptBox();
+    retrieveFormInput("title").focus();
+  });
+
+// Remove the prompt from the DOM when clicking the prompt's background.
+promptBg.addEventListener("click", displayOrHidePromptBox);
