@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 const myLibrary = [];
 const promptBox = document.querySelector(".prompt-box");
 const promptBg = document.querySelector(".prompt-bg");
@@ -123,10 +124,12 @@ function createBookCard(book) {
   });
 }
 
-function bookAlreadyExists(newBook, existingBookTitle, currentBookTitle) {
+function bookAlreadyExists(newBook) {
   const bookWarning = document.querySelector(".book-exists-warning");
+  const alreadyExistingBooks = myLibrary.map((book) => book.title);
+  const currentBookTitle = retrieveFormInput("title").value;
 
-  if (!existingBookTitle.includes(currentBookTitle)) {
+  if (!alreadyExistingBooks.includes(currentBookTitle)) {
     myLibrary.push(newBook);
     createBookCard(newBook);
     displayOrHidePromptBox();
@@ -138,12 +141,8 @@ function bookAlreadyExists(newBook, existingBookTitle, currentBookTitle) {
 
 function addBookToLibrary() {
   const newBook = new Book();
-  const currentBookTitle = retrieveFormInput("title").value;
 
-  // We make sure that the book's title isn't already in the library.
-  const alreadyExistingBooks = myLibrary.map((book) => book.title);
-
-  bookAlreadyExists(newBook, alreadyExistingBooks, currentBookTitle);
+  bookAlreadyExists(newBook);
 }
 
 const addBookBtn = document
